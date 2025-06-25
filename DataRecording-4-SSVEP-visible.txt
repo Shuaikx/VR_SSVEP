@@ -1,0 +1,1 @@
+PersonID	ave_Distance	std_Distance	Time	Width	Amplitude	preName	CurrentName	ImputMethods	pointerState	reRenterTimes
