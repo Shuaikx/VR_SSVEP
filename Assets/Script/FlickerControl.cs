@@ -136,6 +136,7 @@ public class FlickerControl : MonoBehaviour
             outline.enabled = true;
             Invoke("toNextTarget", 2.0f);
         }
+        
         dataRecorder.LogDataRow(aim.getBlockIndex(), ball.Index, result, 3.0f);
     }
     private void toNextTarget()

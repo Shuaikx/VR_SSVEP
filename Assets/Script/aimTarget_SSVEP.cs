@@ -24,6 +24,7 @@ public class aimTarget_SSEVEP : MonoBehaviour
     [SerializeField] private SocketControl socketControl;
     //[SerializeField] private Text textBoard;
     private bool isPause = true;
+    
 
     // Use this for initialization
     protected virtual void Start()
@@ -100,6 +101,7 @@ public class aimTarget_SSEVEP : MonoBehaviour
     {
         flickerControl.TurnFlickerOff();
         inPractice = false;
+        sM.setIsPratice(false);
         isPause = true;
         count = 0;
         currentTargetIndex = 0;
@@ -163,6 +165,10 @@ public class aimTarget_SSEVEP : MonoBehaviour
 
     protected virtual void UpdateScene()
     {
+        /*if (inPractice)
+        {
+            return;
+        }*/
         sM.updateScene();
     }
 }
