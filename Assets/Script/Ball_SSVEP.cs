@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using Oculus.Interaction;
+using System.Collections.Generic; // 引入 List 所需的命名空间
 
 public class Ball_SSVEP : MonoBehaviour
 {
@@ -11,42 +11,77 @@ public class Ball_SSVEP : MonoBehaviour
     [SerializeField] private Color colorFlickerOn = Color.black;
     [SerializeField] private bool flickerOn = false;
 
+    private List<Color> _flickerColorSequence = new List<Color>();
     private Material material;
-    private float timer;
+    
+    private float _sequenceTimer = 0f;
 
-    void Awake()
+    private const int ScreenRefreshRateHz = 60; 
+
+    void Start()
     {
         material = GetComponent<Renderer>().material;
+        PrecalculateFlickerColors(); 
+        FlickerControl.Instance.OnFlickerTurnedOn += startStimulate;
+        FlickerControl.Instance.OnFlickerTurnedOff += endStimulate;
+    }
+
+    void Dispose()
+    {
+        FlickerControl.Instance.OnFlickerTurnedOn -= startStimulate;
+        FlickerControl.Instance.OnFlickerTurnedOff -= endStimulate;
     }
 
     void Update()
     {
         if (flickerOn)
         {
-            Flicker();
+            _sequenceTimer += Time.deltaTime;
+
+            int sequenceLength = _flickerColorSequence.Count;
+
+            if (sequenceLength > 0)
+            {
+                float framesPassed = _sequenceTimer * ScreenRefreshRateHz;
+                int currentFrameIndex = (int)framesPassed % sequenceLength;
+                
+                material.color = _flickerColorSequence[currentFrameIndex];
+            }
         }
     }
 
-    private void Flicker()
+    /// <summary>
+    /// 预计算一个完整闪烁周期内的所有颜色帧。
+    /// </summary>
+    private void PrecalculateFlickerColors()
     {
-        // 核心修正：正确计算正弦波频率与相位
-        float radians = 2 * Mathf.PI * CycleHz * timer + PhaseDelay;
-        float sineValue = Mathf.Sin(radians);
+        _flickerColorSequence.Clear(); // 清空旧的序列
+        int framesPerCycle = Mathf.RoundToInt(ScreenRefreshRateHz / CycleHz);
 
-        // 将正弦波从[-1,1]映射到[0,1]区间
-        float colorMix = (sineValue + 1f) * 0.5f;
+        if (framesPerCycle <= 0)
+        {
+            Debug.LogError("计算的帧数 <= 0，请检查 CycleHz 或 ScreenRefreshRateHz 设置。", this);
+            return;
+        }
 
-        // 颜色混合
-        material.color = Color.Lerp(colorOrigin, colorFlickerOn, colorMix);
+        float timeStepPerFrameInCycle = (1.0f / CycleHz) / framesPerCycle;
 
-        // 更新时间（无需取模）
-        timer += Time.deltaTime;
+        for (int i = 0; i < framesPerCycle; i++)
+        {
+            float currentTimeInCycle = i * timeStepPerFrameInCycle;
+            float radians = 2 * Mathf.PI * CycleHz * currentTimeInCycle + PhaseDelay;
+            float sineValue = Mathf.Sin(radians);
+
+            float colorMix = (sineValue + 1f) * 0.5f;
+
+            Color calculatedColor = Color.Lerp(colorOrigin, colorFlickerOn, colorMix);
+            _flickerColorSequence.Add(calculatedColor);
+        }
     }
 
-    // 保留其他方法（startNotify/endNotify等）...
     public void startNotify()
     {
-        timer = 0f;
+        flickerOn = false; 
         if (material.color != colorNotify)
             material.color = colorNotify;
     }
@@ -59,6 +94,7 @@ public class Ball_SSVEP : MonoBehaviour
 
     public void startStimulate()
     {
+        _sequenceTimer = 0f; 
         if (!flickerOn)
             flickerOn = true;
     }
@@ -68,5 +104,18 @@ public class Ball_SSVEP : MonoBehaviour
         if (flickerOn)
             flickerOn = false;
         material.color = colorOrigin;
+    }
+
+    public void SetFlickerParameters(float newCycleHz, float newPhaseDelay)
+    {
+        if (CycleHz != newCycleHz || PhaseDelay != newPhaseDelay)
+        {
+            CycleHz = newCycleHz;
+            PhaseDelay = newPhaseDelay;
+            PrecalculateFlickerColors(); // 重新预计算
+            _sequenceTimer = 0f; // 重置计时器
+            if (flickerOn) // 如果正在闪烁，立即更新颜色
+                material.color = _flickerColorSequence[0];
+        }
     }
 }

@@ -10,27 +10,26 @@ public class SocketControl : MonoBehaviour
 {
     public string ServerIP = "127.0.0.1";
     public Int32 ServerPort = 4003;
-    public FlickerControl flickerControl;
     [SerializeField] private bool TestScene;
     [SerializeField] private bool SSVEPScene;
     private TcpClient clientSocket;
     private NetworkStream stream;
     private byte[] receiveBuffer = Encoding.Default.GetBytes("Hello");
     public static bool authenticateState = false;
-    [Tooltip("Õë¶ÔTask1 ºÍ SSVEP ÆäÓàÇé¿öÎª¿Õ")]
+    [Tooltip("ï¿½ï¿½ï¿½Task1 ï¿½ï¿½ SSVEP ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½")]
     public aimTarget_SSEVEP aimTarget;
-    [Tooltip("Õë¶ÔTask3 ºÍ SSVEP ÆäÓàÇé¿öÎª¿Õ")]
+    [Tooltip("ï¿½ï¿½ï¿½Task3 ï¿½ï¿½ SSVEP ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½")]
     //public aimTarget_SSVEP_t2 aimTarget_t2;
     public TestSceneControl testControl;
     [SerializeField] private bool noConnectedWithEEG;
     //public FlickerControl flickerControl;
     // public ControlManager manager;
 
-    // ÐÂÔö£ºÓÃÓÚ²âÁ¿ÑÓ³ÙµÄ Stopwatch
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú²ï¿½ï¿½ï¿½ï¿½Ó³Ùµï¿½ Stopwatch
     private Stopwatch _authenticationStopwatch;
 
-    // ÐÂÔö£ºÓÃÓÚ´æ´¢¼ÆËã³öµÄÑÓ³Ù
-    [Tooltip("´Ó·¢ËÍÈÏÖ¤ÏûÏ¢µ½½ÓÊÕÈÏÖ¤»Ø¸´µÄÍøÂçÑÓ³Ù£¨ºÁÃë£©¡£")]
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú´æ´¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó³ï¿½
+    [Tooltip("ï¿½Ó·ï¿½ï¿½ï¿½ï¿½ï¿½Ö¤ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¤ï¿½Ø¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó³Ù£ï¿½ï¿½ï¿½ï¿½ë£©ï¿½ï¿½")]
     public float networkLatencyMs = 0f;
 
     private void Start()
@@ -65,7 +64,7 @@ public class SocketControl : MonoBehaviour
     public void StartClient()
     {
         if(SSVEPScene)
-            flickerControl.SetTextBoardContext("Connecting");
+            FlickerControl.Instance.SetTextBoardContext("Connecting");
         ConnectToServer();
     }
 
@@ -129,7 +128,7 @@ public class SocketControl : MonoBehaviour
                     else
                     {
                         if(SSVEPScene)
-                            flickerControl.HandleResult(receiveBuffer); // For SSVEP
+                            FlickerControl.Instance.HandleResult(receiveBuffer); // For SSVEP
                         if(TestScene)
                             TestSceneControl.HandleResult(receiveBuffer); // For test
                     }
@@ -162,7 +161,7 @@ public class SocketControl : MonoBehaviour
             }
             
             if(SSVEPScene)
-                flickerControl.SetTextBoardContext("Press Space when you are ready.");
+                FlickerControl.Instance.SetTextBoardContext("Press Space when you are ready.");
         }
         else
         {

@@ -1,3 +1,4 @@
+using System;
 using Oculus.Interaction;
 using UnityEditor;
 using UnityEngine;
@@ -16,18 +17,34 @@ public class FlickerControl : MonoBehaviour
     [SerializeField] private GameObject CurrentBall;
     [SerializeField] private Text TextBoard;
     [SerializeField] private DataRecorder dataRecorder;
-    private static Text textBoard;
     private static Ball_SSVEP ball;
     private Outline outline;
     private bool flickerState = false;
-    private bool portDataSent = false;
+    private bool isStimulated = false;
     private bool socketDataSent = false;
     private bool pause = false;
-    // private int trialIndex = 0;
+
+    public static FlickerControl Instance { get; private set; }
+
+    // TurnFlickerOn 事件：当闪烁开启时触发，并传递当前闪烁的GameObject
+    public event Action OnFlickerTurnedOn;
+    // TurnFlickerOff 事件：当闪烁关闭时触发
+    public event Action OnFlickerTurnedOff;
 
     private void Awake()
     {
-        textBoard = TextBoard;
+        // 实现单例模式逻辑
+        if (Instance != null && Instance != this)
+        {
+            Debug.LogWarning("FlickerControl: Found an existing instance, destroying new one.", this);
+            Destroy(gameObject);
+        }
+        else
+        {
+            Instance = this;
+            // 如果你希望这个单例在场景切换时不被销毁，添加以下行
+            // DontDestroyOnLoad(gameObject); // 根据你的需求决定是否需要
+        }
     }
 
     private void Start()
@@ -58,24 +75,31 @@ public class FlickerControl : MonoBehaviour
             }
             else if (timer > notifyTime && timer <= notifyTime + flickTime)
             {
-                outline.enabled = false;
-                if (!portDataSent)
+                if (!isStimulated)
                 {
+                    outline.enabled = false;
                     byte b = System.Convert.ToByte(ball.Index);
                     byte[] trigger = new byte[1] { b };
                     port.WriteData(trigger);
                     Debug.Log($"Trigger {trigger[0]} is sent");
-                    portDataSent = true;
+                    isStimulated = true;
+                    //gameObject.BroadcastMessage("startStimulate");
+                    OnFlickerTurnedOn?.Invoke();
+
                 }
-                gameObject.BroadcastMessage("startStimulate");
             }
             else if (timer > notifyTime + flickTime && timer <= notifyTime + flickTime + reponseTime)
             {
-                gameObject.BroadcastMessage("endStimulate");
+                if (isStimulated)
+                {
+                    //gameObject.BroadcastMessage("endStimulate");
+                    OnFlickerTurnedOff?.Invoke();
+                    isStimulated = false;
+
+                }
             }
             else
             {
-                portDataSent = false;
                 socketDataSent = false;
                 timer = 0f;
                 flickerState = false;
@@ -85,7 +109,7 @@ public class FlickerControl : MonoBehaviour
 
     public void TurnFlickerOn(GameObject targetBall)
     {
-        
+
         // ball.endStimulate();
         // trialIndex += 1;
         gameObject.BroadcastMessage("endStimulate");
@@ -99,14 +123,14 @@ public class FlickerControl : MonoBehaviour
     }
     public void TurnFlickerOff()
     {
-        if(flickerState)
+        if (flickerState)
             flickerState = false;
         gameObject.BroadcastMessage("endStimulate");
     }
-    
+
     public void HandleResult(byte[] resultMessage)
     {
-        if(System.Convert.ToByte(254) == resultMessage[0])
+        if (System.Convert.ToByte(254) == resultMessage[0])
         {
             Debug.Log($"Received: Saving the model, pause!");
             SetTextBoardContext("Saving...");
@@ -136,7 +160,7 @@ public class FlickerControl : MonoBehaviour
             outline.enabled = true;
             Invoke("toNextTarget", 2.0f);
         }
-        
+
         dataRecorder.LogDataRow(aim.getBlockIndex(), ball.Index, result, 3.0f);
     }
     private void toNextTarget()
@@ -147,12 +171,12 @@ public class FlickerControl : MonoBehaviour
         outline.enabled = false;
         if (aim != null)
             aim.showNextTarget();
-        else 
+        else
             return;
     }
 
     public void SetTextBoardContext(string context)
     {
-        textBoard.text = context;
+        TextBoard.text = context;
     }
 }

@@ -11,7 +11,6 @@ using System;
 public class aimTarget_SSEVEP : MonoBehaviour
 {
     private int trialCount;
-    public FlickerControl flickerControl;
     private GameObject currentBall;
     public sceneManager sM;
     //private bool startGame = false;
@@ -32,7 +31,7 @@ public class aimTarget_SSEVEP : MonoBehaviour
         trialCount = IOManager.GetTrialCount();
         targetNumber = sceneManager.returnTargetNumber();
 
-        flickerControl.SetTextBoardContext("Press C to Connect.");
+        FlickerControl.Instance.SetTextBoardContext("Press C to Connect.");
     }
 
 
@@ -71,7 +70,7 @@ public class aimTarget_SSEVEP : MonoBehaviour
 
             if (Input.GetKeyDown(KeyCode.N))
             {
-                flickerControl.TurnFlickerOff();
+                FlickerControl.Instance.TurnFlickerOff();
                 showNextTarget();
             }
         }
@@ -79,7 +78,7 @@ public class aimTarget_SSEVEP : MonoBehaviour
         {
             if (Input.GetKeyDown(KeyCode.N))
             {
-                flickerControl.TurnFlickerOff();
+                FlickerControl.Instance.TurnFlickerOff();
                 showNextTarget();
                 //Debug.Log("Trial: " + count.ToString());
             }
@@ -99,13 +98,13 @@ public class aimTarget_SSEVEP : MonoBehaviour
 
     protected virtual void clabiratedAndStart()
     {
-        flickerControl.TurnFlickerOff();
+        FlickerControl.Instance.TurnFlickerOff();
         inPractice = false;
         sM.setIsPratice(false);
         isPause = true;
         count = 0;
         currentTargetIndex = 0;
-        flickerControl.SetTextBoardContext("Press Space when you are ready.");
+        FlickerControl.Instance.SetTextBoardContext("Press Space when you are ready.");
         //initTargetIndex();
     }
 
@@ -113,9 +112,9 @@ public class aimTarget_SSEVEP : MonoBehaviour
     {
         Debug.Log($"Count: {count}, currentTargetIndex: {currentTargetIndex}");
         if (inPractice)
-            flickerControl.SetTextBoardContext("Practice Block");
+            FlickerControl.Instance.SetTextBoardContext("Practice Block");
         else
-            flickerControl.SetTextBoardContext("Formal Block " + (Mathf.Floor(count / 11) + 1).ToString());
+            FlickerControl.Instance.SetTextBoardContext("Formal Block " + (Mathf.Floor(count / 11) + 1).ToString());
 
         currentTargetIndex++;
         // Debug.Log("Count: " + count);
@@ -131,7 +130,7 @@ public class aimTarget_SSEVEP : MonoBehaviour
                 return;
             }
 
-            flickerControl.SetTextBoardContext("Press Space when you are ready.");
+            FlickerControl.Instance.SetTextBoardContext("Press Space when you are ready.");
             isPause = true;
             currentTargetIndex = 0;
             return;
@@ -139,7 +138,7 @@ public class aimTarget_SSEVEP : MonoBehaviour
 
         string targetName = "Ball" + currentTargetIndex;
         currentBall = GameObject.Find(targetName);
-        flickerControl.TurnFlickerOn(currentBall);
+        FlickerControl.Instance.TurnFlickerOn(currentBall);
         count++;
         
     }
@@ -148,27 +147,23 @@ public class aimTarget_SSEVEP : MonoBehaviour
     {
         currentTargetIndex = 0;
         if (inPractice)
-            flickerControl.SetTextBoardContext("Practice Block");
+            FlickerControl.Instance.SetTextBoardContext("Practice Block");
         else
-            flickerControl.SetTextBoardContext("Formal Block " + (Mathf.Floor((count + 1) / 11) + 1).ToString());
+            FlickerControl.Instance.SetTextBoardContext("Formal Block " + (Mathf.Floor((count + 1) / 11) + 1).ToString());
         string targetName = "Ball" + currentTargetIndex;
         currentBall = GameObject.Find(targetName);
-        flickerControl.TurnFlickerOn(currentBall);
+        FlickerControl.Instance.TurnFlickerOn(currentBall);
         count++;
     }
 
     public void initPracticeSetUp() {
         count = 0;
-        flickerControl.SetTextBoardContext("Practice Block");
+        FlickerControl.Instance.SetTextBoardContext("Practice Block");
         initTargetIndex();
     } 
 
     protected virtual void UpdateScene()
     {
-        /*if (inPractice)
-        {
-            return;
-        }*/
         sM.updateScene();
     }
 }
