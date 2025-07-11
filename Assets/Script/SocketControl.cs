@@ -3,6 +3,8 @@ using System.Net;
 using System.Text;
 using UnityEngine;
 using System;
+using System.Diagnostics;
+using Debug = UnityEngine.Debug;
 
 public class SocketControl : MonoBehaviour
 {
@@ -23,6 +25,14 @@ public class SocketControl : MonoBehaviour
     [SerializeField] private bool noConnectedWithEEG;
     //public FlickerControl flickerControl;
     // public ControlManager manager;
+
+    // 新增：用于测量延迟的 Stopwatch
+    private Stopwatch _authenticationStopwatch;
+
+    // 新增：用于存储计算出的延迟
+    [Tooltip("从发送认证消息到接收认证回复的网络延迟（毫秒）。")]
+    public float networkLatencyMs = 0f;
+
     private void Start()
     {
         Loom.Initialize();
@@ -79,7 +89,7 @@ public class SocketControl : MonoBehaviour
             clientSocket = new TcpClient(ServerIP, ServerPort);
             stream = clientSocket.GetStream();
             Debug.Log("Connected to server.");
-            SendAutheication();
+            SendAuthentication();
             StartReceiving();
         }
         catch (Exception e)
@@ -88,9 +98,10 @@ public class SocketControl : MonoBehaviour
         }
     }
 
-    public void SendAutheication()
+    public void SendAuthentication()
     {
         byte[] message = new byte[1] { 0x11 };
+        _authenticationStopwatch = Stopwatch.StartNew();
         SendDataToServer(message);
         Debug.Log("Sent Authentication Message");
     }
@@ -139,7 +150,17 @@ public class SocketControl : MonoBehaviour
         if (receivedMessage[0] == 0x11)
         {
             authenticateState = true;
-            Debug.Log("The server is authenticated, the experiment can start.");
+            if (_authenticationStopwatch != null && _authenticationStopwatch.IsRunning)
+            {
+                _authenticationStopwatch.Stop();
+                networkLatencyMs = (float)_authenticationStopwatch.Elapsed.TotalMilliseconds;
+                UnityEngine.Debug.Log($"The server is authenticated. Network Latency: {networkLatencyMs:F2} ms");
+            }
+            else
+            {
+                UnityEngine.Debug.Log("The server is authenticated, but latency could not be measured.");
+            }
+            
             if(SSVEPScene)
                 flickerControl.SetTextBoardContext("Press Space when you are ready.");
         }
